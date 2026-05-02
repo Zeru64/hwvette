@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="overflow-y-scroll">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,44 +17,42 @@
 <body class="bg-zinc-950 text-zinc-100">
 
     <nav class="bg-red-600 border-b border-red-700 sticky top-0 z-50">
-        <div class="max-w-screen-2xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div class="max-w-screen-2xl mx-auto px-6 py-4 flex items-center justify-between min-w-0">
             <div class="flex items-center gap-x-3">
-                <div class="w-9 h-9 bg-white rounded-2xl flex items-center justify-center text-red-600 text-3xl shadow-inner">HW</div>
+                <div class="hidden sm:flex w-9 h-9 bg-white rounded-2xl items-center justify-center text-red-600 text-3xl shadow-inner">HW</div>
                 <div>
-                    <h1 class="text-2xl font-semibold tracking-tight">HW Corvette</h1>
+                    <h1 class="text-2xl font-semibold tracking-tight">HW Vette</h1>
                     <p class="text-red-200 text-xs -mt-0.5">Zeru's Collection</p>
                 </div>
             </div>
 
-            <div class="flex bg-red-700 rounded-3xl p-1 shadow-inner">
-                <button onclick="setPage('coleccion')" id="tab-coleccion" class="nav-tab px-8 py-3 rounded-3xl text-sm font-medium">Coleccion</button>
-                <button onclick="setPage('faltantes')" id="tab-faltantes" class="nav-tab px-8 py-3 rounded-3xl text-sm font-medium">Faltantes</button>
-                <button onclick="setPage('informacion')" id="tab-informacion" class="nav-tab px-8 py-3 rounded-3xl text-sm font-medium">Informacion</button>
+            <div class="flex min-w-0 bg-red-700 rounded-3xl p-1 shadow-inner">
+                <button onclick="setPage('coleccion')" id="tab-coleccion" class="nav-tab flex-1 px-3 sm:px-8 py-3 rounded-3xl text-sm font-medium truncate">Coleccion</button>
+                <button onclick="setPage('faltantes')" id="tab-faltantes" class="nav-tab flex-1 px-3 sm:px-8 py-3 rounded-3xl text-sm font-medium truncate">Faltantes</button>
+                <button onclick="setPage('informacion')" id="tab-informacion" class="nav-tab flex-1 px-3 sm:px-8 py-3 rounded-3xl text-sm font-medium truncate">Info</button>
             </div>
 
-            <div class="text-xs bg-red-700 text-red-100 px-3 py-1.5 rounded-2xl flex items-center">
+            <div class="hidden sm:flex text-xs bg-red-700 text-red-100 px-3 py-1.5 rounded-2xl items-center">
                 <span id="total-count" class="font-mono font-semibold">0</span>
-                <!-- <span class="ml-1 opacity-70">xd</span> -->
             </div>
         </div>
     </nav>
 
-    <div id="main-content" class="max-w-screen-2xl mx-auto px-6 py-8"></div>
+    <div id="main-content" class="max-w-screen-2xl mx-auto px-6 py-8 overflow-x-hidden"></div>
 
     <!-- Modal Detalle -->
     <div id="detail-modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[100] p-4">
-        <div class="bg-white text-zinc-900 rounded-3xl max-w-2xl w-full max-h-[92vh] overflow-hidden modal">
-            <div class="p-8" id="detail-content"></div>
+        <div class="bg-white text-zinc-900 rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col">
+            <div class="p-6 overflow-y-auto" id="detail-content"></div>
         </div>
     </div>
 
-    <!-- Modal Editar / Añadir -->
-    <div id="form-modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[100] p-4">
-        <div class="bg-white text-zinc-900 rounded-3xl max-w-xl w-full modal">
+    <!-- Modal Editar / Registrar -->
+    <div id="form-modal" class="hidden fixed inset-0 bg-black/80 flex items-start justify-center overflow-y-auto z-[100] p-4">
+        <div class="bg-white text-zinc-900 rounded-3xl max-w-xl w-full max-h-[90vh] overflow-y-auto modal">
             <div class="p-8">
-                <h2 id="form-title" class="text-2xl font-semibold mb-6">Registrar nuevo Corvette</h2>
+                <h2 id="form-title" class="text-2xl font-semibold mb-6">Nuevo Corvette</h2>
                 <div class="grid grid-cols-2 gap-x-6 gap-y-5" id="item-form"></div>
-
                 <div class="flex justify-end gap-x-4 mt-10">
                     <button onclick="closeAllModals()" class="px-6 py-3 border border-zinc-300 rounded-2xl hover:bg-zinc-100">Cancelar</button>
                     <button onclick="saveItem()" class="px-8 py-3 bg-emerald-600 text-white rounded-2xl hover:bg-emerald-700 font-semibold">Guardar</button>
@@ -68,6 +66,9 @@
         let currentPage = 'coleccion';
         let currentModel = null;
         let editingId = null;
+		document.addEventListener("keydown", (e) => {
+			if (e.key === "Escape") closeAllModals();
+		});
 
         const DB_URL = "https://raw.githubusercontent.com/Zeru64/hwvette/refs/heads/main/database.json";
 
@@ -83,7 +84,7 @@
             { key: 'name', label: 'Nombre' },
             { key: 'year', label: 'Lanzamiento' },
             { key: 'color', label: 'Color' },
-            { key: 'serie1', label: 'Formato' },
+            { key: 'serie1', label: 'Linea' },
             { key: 'serie2', label: 'Serie' },
             { key: 'subserie', label: 'Subserie' },
             { key: 'variant', label: 'Variante' },
@@ -137,26 +138,28 @@
         function renderContent() {
             const container = document.getElementById('main-content');
             let html = '';
+
             if (currentPage === 'informacion') {
                 const coleccionCount = database.filter(i => i.collection === 'Coleccion').length;
                 const faltantesCount = database.filter(i => i.collection === 'Faltantes').length;
+
                 html = `
                 <div class="max-w-4xl mx-auto">
                     <div class="bg-white text-zinc-900 rounded-3xl p-8">
-                        <h1 class="text-4xl font-semibold mb-2">Informacion general</h1>
-                        <p class="text-zinc-500 mb-8">Resumen de tu registro - ${database.length} coches totales</p>
-                        <div class="grid grid-cols-3 gap-6">
+                        <h1 class="text-4xl font-semibold mb-2">Resumen</h1>
+                        <p class="text-zinc-500 mb-8">Resumen de tu registro</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                             <div class="bg-zinc-50 border border-zinc-100 rounded-3xl p-6">
                                 <p class="text-emerald-600 text-sm font-medium">COLECCION</p>
-                                <p class="text-7xl font-semibold text-emerald-600 mt-2">${coleccionCount}</p>
+                                <p class="text-5xl sm:text-6xl lg:text-7xl font-semibold text-emerald-600 mt-2">${coleccionCount}</p>
                             </div>
                             <div class="bg-zinc-50 border border-zinc-100 rounded-3xl p-6">
                                 <p class="text-amber-600 text-sm font-medium">FALTANTES</p>
-                                <p class="text-7xl font-semibold text-amber-600 mt-2">${faltantesCount}</p>
+                                <p class="text-5xl sm:text-6xl lg:text-7xl font-semibold text-amber-600 mt-2">${faltantesCount}</p>
                             </div>
                             <div class="bg-zinc-50 border border-zinc-100 rounded-3xl p-6">
                                 <p class="text-red-600 text-sm font-medium">TOTAL</p>
-                                <p class="text-7xl font-semibold text-red-600 mt-2">${database.length}</p>
+                                <p class="text-5xl sm:text-6xl lg:text-7xl font-semibold text-red-600 mt-2">${database.length}</p>
                             </div>
                         </div>
                     </div>
@@ -168,7 +171,6 @@
 						transition-all duration-200">
 						Exportar Coleccion
 					</button>
-
 					<button onclick="exportData('Faltantes')"
 						class="px-6 py-4 bg-zinc-800 text-white rounded-xl
 						shadow-md hover:bg-emerald-700 hover:shadow-lg
@@ -187,20 +189,25 @@
                 html = `
                 <div class="mb-6 flex items-center justify-between">
                     <div class="flex items-center gap-4">
-                        <button onclick="backToModels()" class="px-6 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-3xl">Volver</button>
+                        <button onclick="backToModels()" class="px-6 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-3xl">
+							<span class="text-lg">\<-</span>
+							<span class="hidden sm:inline ml-2">\Volver</span>
+						</button>
                         <h1 class="text-3xl font-semibold">${currentModel}</h1>
                     </div>
                     <button onclick="addNewItem()" class="flex items-center gap-x-2 bg-emerald-600 hover:bg-emerald-700 px-6 py-3 rounded-3xl text-sm font-medium">
-                        <span class="text-2xl">+</span> Registrar nuevo
+                        <span class="text-2xl">+</span>
+						<span class="hidden sm:inline">Nuevo</span>
                     </button>
                 </div>
-                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                     ${items.map((item) => `
                         <div onclick="showDetailModalByIndex(${database.indexOf(item)})" class="grid-item bg-white rounded-3xl overflow-hidden cursor-pointer">
                             <img src="${item.imgurl || 'https://picsum.photos/id/1015/600/400'}" class="w-full aspect-video object-cover" onerror="this.src='https://picsum.photos/id/1015/600/400'">
-                            <div class="p-4">
-                                <p class="font-medium">${item.name}</p>
-                                <p class="text-zinc-500">${item.color || ''}</p>
+                            <div class="p-3">
+                                <p class="font-medium truncate">${item.name}</p>
+								<p class="text-s text-zinc-500">${item.year} ${item.serie1}</p>
+								<p class="text-xs text-zinc-500">${item.variant}</p>
                             </div>
                         </div>
                     `).join('')}
@@ -211,23 +218,25 @@
                 <div class="flex justify-between items-center mb-8">
                     <h1 class="text-3xl font-semibold">${pageConfig[currentPage].label}</h1>
                     <button onclick="addNewItem()" class="flex items-center gap-x-2 bg-emerald-600 hover:bg-emerald-700 px-6 py-3 rounded-3xl text-sm font-medium">
-                        <span class="text-2xl">+</span> Añadir nuevo
+                        <span class="text-2xl">+</span>
+						<span class="hidden sm:inline">Nuevo</span>
                     </button>
                 </div>
-                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                     ${Object.keys(models).sort().map(m => {
                         const first = models[m][0];
                         return `
                         <div onclick="selectModel('${m.replace(/'/g, "\\'")}')" class="model-card bg-white rounded-3xl overflow-hidden cursor-pointer">
-                            <img src="${first.imgurl || 'https://picsum.photos/id/1015/600/400'}" class="w-full h-48 object-cover" onerror="this.src='https://picsum.photos/id/1015/600/400'">
+                            <img src="${first.imgurl || 'https://picsum.photos/id/1015/600/400'}" class="w-full aspect-video object-cover" onerror="this.src='https://picsum.photos/id/1015/600/400'">
                             <div class="p-5">
-                                <p class="font-semibold text-xl">${m}</p>
+                                <p class="font-semibold text-l">${m}</p>
                                 <p class="text-zinc-500">${models[m].length} versiones</p>
                             </div>
                         </div>`;
                     }).join('')}
                 </div>`;
             }
+
             container.innerHTML = html;
             renderNav();
         }
@@ -235,8 +244,19 @@
         function selectModel(model) { currentModel = model; renderContent(); }
         function backToModels() { currentModel = null; renderContent(); }
         function setPage(page) { currentPage = page; currentModel = null; renderContent(); }
+		function lockScroll() {
+			const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+			document.body.style.paddingRight = scrollBarWidth + "px";
+			document.body.style.overflow = "hidden";
+		}
+		function unlockScroll() {
+			document.body.style.overflow = "";
+			document.body.style.paddingRight = "";
+		}
 
         function showDetailModalByIndex(globalIndex) {
+			document.body.style.overflow = "hidden";
+			lockScroll();
             const item = database[globalIndex];
             if (!item) return;
 
@@ -282,6 +302,7 @@
 
         function editItemByIndex(index) {
             editingId = index;
+			document.body.style.overflow = "hidden";
             document.getElementById('form-title').textContent = 'Editar Hot Wheel';
             buildForm(index);
             document.getElementById('form-modal').classList.remove('hidden');
@@ -289,7 +310,7 @@
 
         function addNewItem() {
             editingId = null;
-            document.getElementById('form-title').textContent = 'Añadir nuevo Hot Wheel';
+            document.getElementById('form-title').textContent = 'Registrar nuevo Corvette';
             buildForm();
             document.getElementById('form-modal').classList.remove('hidden');
         }
@@ -307,7 +328,7 @@
                     </select></div>`;
                 } else if (field.key === 'notes') {
                     html += `<div class="col-span-2"><label class="block text-xs font-medium text-zinc-500 mb-1">${field.label}</label>
-                    <textarea id="form-${field.key}" rows="3" class="w-full border border-zinc-200 rounded-3xl px-5 py-4">${val}</textarea></div>`;
+                    <textarea id="form-${field.key}" rows="1" class="w-full border border-zinc-200 rounded-3xl px-5 py-4">${val}</textarea></div>`;
                 } else {
                     html += `<div><label class="block text-xs font-medium text-zinc-500 mb-1">${field.label}</label>
                     <input type="text" id="form-${field.key}" value="${val}" class="w-full border border-zinc-200 rounded-3xl px-5 py-4"></div>`;
@@ -322,16 +343,19 @@
                 const el = document.getElementById(`form-${f.key}`);
                 if (el) newItem[f.key] = el.value.trim();
             });
+
             if (!newItem.id || !newItem.name) {
                 alert("ID y Nombre son obligatorios");
                 return;
             }
+
             if (editingId !== null) {
                 database[editingId] = { ...database[editingId], ...newItem };
             } else {
                 database.push(newItem);
             }
-            alert("Registro guardado localmente.\nRecuerda editar el archivo database.json en GitHub para actualizar la versión online.");
+
+            alert("? Registro guardado localmente.\nRecuerda editar el archivo database.json en GitHub para actualizar la versión online.");
             closeAllModals();
             renderContent();
         }
@@ -344,8 +368,10 @@
         }
 
         function closeAllModals() {
+			document.body.style.overflow = "";
             document.getElementById('detail-modal').classList.add('hidden');
             document.getElementById('form-modal').classList.add('hidden');
+			unlockScroll();
         }
 
         function initialize() {
@@ -353,30 +379,40 @@
         }
 		
 		function exportData(type) {
+
 			let filtered;
+
 			if (type === "Coleccion") {
 				filtered = database.filter(item => item.collection === "Coleccion");
 			}
+
 			else if (type === "Faltantes") {
 				filtered = database.filter(item => item.collection === "Faltantes");
 			}
+
 			else if (type === "All") {
 				filtered = database;
 			}
+
 			const sorted = sortDatabase(filtered);
+
 			downloadJSON(sorted, `${type.toLowerCase()}.json`);
 		}
 
 		function downloadJSON(data, filename) {
+
 			const blob = new Blob(
 				[JSON.stringify(data, null, 2)],
 				{ type: "application/json" }
 			);
+
 			const url = URL.createObjectURL(blob);
+
 			const a = document.createElement("a");
 			a.href = url;
 			a.download = filename;
 			a.click();
+
 			URL.revokeObjectURL(url);
 		}
 
